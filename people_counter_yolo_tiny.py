@@ -8,10 +8,11 @@ import cv2
 
 
 
+#VIDEO_NAME = "TownCentreXVID.avi"
 VIDEO_NAME = "People.mp4"
-MINIMUM_CONFIDENCE = 0.4
-SKIP_FRAMES = 40
-MAX_DISAPPEARED = 20
+MINIMUM_CONFIDENCE = 0.3
+SKIP_FRAMES = 50
+MAX_DISAPPEARED = 30
 
 camera = cv2.VideoCapture(VIDEO_NAME)
 cv2.namedWindow("People Tracker")
@@ -61,15 +62,19 @@ while True:
 
     if rects:
         centroids = [(int((x1 + x2) / 2.0), int((y1 + y2) / 2.0)) for (x1, y1, x2, y2) in rects]
-        D = dist.cdist(np.array(centroids), np.array(centroids))
-        np.fill_diagonal(D, np.nan)
-        D = np.nanmin(D, axis=0)
-        for i in range(D.shape[0]):
-            x1, y1, x2, y2 = rects[i]
-            if D[i] < 50:
-                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 180), 2)
-            else:
-                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+        if len(rects) > 1:
+            D = dist.cdist(np.array(centroids), np.array(centroids))
+            np.fill_diagonal(D, np.nan)
+            D = np.nanmin(D, axis=0)
+            for i in range(D.shape[0]):
+                x1, y1, x2, y2 = rects[i]
+                if D[i] < 50:
+                    cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 180), 2)
+                else:
+                    cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+        else:
+            x1, y1, x2, y2 = rects[0]
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
 
     # use the centroid tracker to associate the old object centroids with the newly computed object centroids
     objects = ct.update(rects)
